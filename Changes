@@ -3,3 +3,20 @@
 
 0.02 2008-10-15 12:37:00
         - fixed tests
+
+0.03 2008-10-22 19:17:00
+    - Added: attribute trait:
+        - lib/MooseX/Role/Cmd/Meta/Attribute/Trait.pm
+    
+    - Added: tests and test/lib
+        - t/lib/Test/Cmd/Dir.pm
+        - t/lib/Test/Cmd/DirWithTraits.pm
+        - t/traits.t
+    
+    - Changed: lib/MooseX/Role/Cmd.pm
+        - Added the attribute trait
+        - Added extra logic to decide how to call args '--verbose' or '-v'
+        - Can also use the CmdOpt trait to explicitly specify the prefix '-verbose'
+        - Added methods:
+            - cmd_args()
+            - _attr_name_to_cmd_options()
