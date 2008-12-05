@@ -1,8 +1,6 @@
-0.01  2007-12-10 21:20:00
-        - initial release
-
-0.02 2008-10-15 12:37:00
-        - fixed tests
+0.04 Fri Dec  5 10:43:01 GMT 2008
+    - Updated MANIFEST
+    - Require IPC::Cmd => 0.42 (RT #41450)
 
 0.03 2008-10-22 19:17:00
     - Added: attribute trait:
@@ -20,3 +18,11 @@
         - Added methods:
             - cmd_args()
             - _attr_name_to_cmd_options()
+
+0.02 2008-10-15 12:37:00
+        - fixed tests
+
+
+0.01  2007-12-10 21:20:00
+        - initial release
+

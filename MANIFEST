@@ -1,4 +1,7 @@
 Changes
+MANIFEST
+META.yml
+Makefile.PL
 inc/Module/AutoInstall.pm
 inc/Module/Install.pm
 inc/Module/Install/AutoInstall.pm
@@ -11,10 +14,11 @@ inc/Module/Install/Metadata.pm
 inc/Module/Install/Win32.pm
 inc/Module/Install/WriteAll.pm
 lib/MooseX/Role/Cmd.pm
-Makefile.PL
-MANIFEST			This list of files
-META.yml
+lib/MooseX/Role/Cmd/Meta/Attribute/Trait.pm
 t/basic.t
 t/execution-Failure.t
+t/lib/Test/Cmd/Dir.pm
+t/lib/Test/Cmd/DirWithTraits.pm
 t/lib/Test/Cmd/Perl.pm
 t/load.t
+t/traits.t

@@ -4,7 +4,7 @@ name     'MooseX-Role-Cmd';
 all_from 'lib/MooseX/Role/Cmd.pm';
 
 requires 'Moose' => 0.24;
-requires 'IPC::Cmd';
+requires 'IPC::Cmd' => 0.42;
 
 auto_install;
 WriteAll;
