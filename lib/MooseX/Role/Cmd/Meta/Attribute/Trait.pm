@@ -82,6 +82,35 @@ has 'cmdopt_name' => (
     predicate => 'has_cmdopt_name',
 );
 
+=head2 cmdopt_env
+
+This attribute trait can be used to specify an environment variable rather
+than a command line option.
+
+    has 'home_dir' => (
+        traits => [ 'CmdOpt' ],
+        is => 'rw',
+        isa => 'Str',
+        cmdopt_env => 'APP_HOME',
+        default => '/my/app/home'
+    );
+    
+    # $ENV{APP_HOME} = /my/app/home
+
+=cut
+
+=head2 has_cmdopt_env
+
+Test for attribute above
+
+=cut
+
+has 'cmdopt_env' => (
+    is        => 'rw',
+    isa       => 'Str',
+    predicate => 'has_cmdopt_env',
+);
+
 no Moose::Role;
 
 # register this as a metaclass alias ...

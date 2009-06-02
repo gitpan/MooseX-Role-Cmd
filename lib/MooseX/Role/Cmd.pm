@@ -7,7 +7,7 @@ use IPC::Cmd ();
 use Moose::Role;
 use MooseX::Role::Cmd::Meta::Attribute::Trait;
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 =head1 NAME
 
@@ -18,9 +18,6 @@ MooseX::Role::Cmd - Wrap system command binaries the Moose way
 Create your command wrapper:
 
     package Cmd::Perl;
-
-    use strict;
-    use warnings;
 
     use Moose;
 
@@ -37,7 +34,9 @@ Use it somewhere else:
     use Cmd::Perl;
 
     my $perl = Cmd::Perl->new(e => q{'print join ", ", @ARGV'});
+    
     print $perl->run(qw/foo bar baz/);
+    
     # prints the STDOUT captured from running:
     # perl -e 'print join ", ", @ARGV' foo bar baz
 
@@ -83,7 +82,7 @@ no Moose;
 
 =head1 METHODS
 
-=head2 my $bin_name = $cmd->build_bin_name
+=head2 $bin_name = $cmd->build_bin_name
 
 Builds the default string for the command name based on the class name.
 
@@ -99,27 +98,13 @@ sub build_bin_name {
     return lc( ( split '::', $class )[-1] );    ## no critic
 }
 
-=head2 my @stdout = $cmd->run(@args);
+=head2 @stdout = $cmd->run(@args);
 
 Builds the command string and runs it based on the objects current attribute
 settings. This will treat all the attributes defined in your class as flags
 to be passed to the command.
 
-Suppose the following setup:
-
-    has 'in'  => (isa => 'Str', is => 'rw')
-    has 'out' => (isa => 'Str', is => 'rw');
-
-    # ...
-
-    $cmd->in('foo');
-    $cmd->out('bar');
-
-The command will be invoked as:
-
-    cmd -in foo -out bar
-
-All quoting issues are left to be solved by the user.
+B<NOTE:> All quoting issues are left to be solved by the user.
 
 =cut
 
@@ -135,6 +120,7 @@ sub run {
     # build full list of cmd args from attrs
     @args = $self->cmd_args( @args );
     
+    #warn "CMD: " . $full_path . " " . join (" ", map { "'$_'"  } @args );
     my ( $success, $error_code, $full_buf, $stdout_buf, $stderr_buf ) =
       IPC::Cmd::run( command => [ $full_path, @args ] );
 
@@ -158,60 +144,137 @@ sub cmd_args {
 
     # exclude this role's attributes from the flag list
     # could use custom metaclasses and introspection, but this will do for now
-    my %non_flag   = map  {    $_ => 1     } __PACKAGE__->meta->get_attribute_list;
-    my @flag_attrs = grep { !$non_flag{$_} }       $self->meta->get_attribute_list;
+    my %non_flag   = map  {     $_ => 1    } __PACKAGE__->meta->get_attribute_list;
+    my @flag_attrs = grep { !$non_flag{$_->name} } values %{ $self->meta->get_attribute_map };
     
     #####
     # IS: 2008/10/15
     # Changed the following to make a start on the suggestion above...
     #####
     #my @flags = map { ( "-$_" => $self->$_ ) } @flag_attrs;
-    my @flags = map { ( $self->_attr_name_to_cmd_options( $_ ) ) } @flag_attrs;
+    my @flags = map { ( $self->_attr_to_cmd_options( $_ ) ) } @flag_attrs;
 
     my @args = ( @flags, @extra_args );
 
     return wantarray ? @args : \@args;
 }
 
+=head1 ADDITIONAL INFORMATION
+
+=head2 Setting the Executable
+
+By default the name of the binary executable is taken from the last part of the class name 
+(in lower case). The path is set during the L<run> method by scanning through your current
+PATH for the given executable (see also the 'can_run' function from L<IPC::Cmd>)
+
+    package MyApp::Commands::Scanner;
+    use Moose;
+    with 'MooseX::Role::Cmd';
+    
+    $cmd = MyApp::Commands::Scanner->new();
+    $cmd->bin_name
+    # /path/to/scanner
+
+If this default behaviour doesn't suit your application then you can override the L<build_bin_name>
+subroutine to explicitly set the executable name
+
+    sub build_bin_name { 'scanner.exe' }
+    # /path/to/scanner.exe
+
+Or you could explicitly set the path with
+
+    sub build_bin_name { '/only/use/this/path/scanner.exe' }
+    # /only/use/this/path/scanner.exe
+
+=head2 How attributes are mapped to parameters
+
+The attributes of the consuming package map directly to the parameters passed
+to the executable. There are a few things to note about the default behaviour
+governing the way these attributes are mapped.
+
+    Attribute           Default Behaviour (@ARGV)
+    ---------           -------------------------
+    single char         prefix attr name with '-'
+    multiple char       prefix attr name with '--'
+    boolean             treat attr as flag (no value)
+    non-boolean         treat attr as parameter (with value)
+    value=undef         ignore attr
+
+These points are illustrated in the following example:
+
+    package MyApp::Commands::Scanner;
+    use Moose;
+    with 'MooseX::Role::Cmd';
+    
+    has 'i'       => ( is => 'rw', isa => 'Str',  default => 'input.txt' );
+    has 'out'     => ( is => 'rw', isa => 'Str' );
+    has 'verbose' => ( is => 'rw', isa => 'Bool', default => 1 );
+    has 'level'   => ( is => 'rw', isa => 'Int' );
+    has 'option'  => ( is => 'rw', isa => 'Str' );
+    
+    $scanner = MyApp::Commands::Scanner->new( output => '/tmp/scanner.log', level => 5 );
+    
+    $scanner->run;
+    # /path/to/scanner -i input.txt --out /tmp/scanner.log --verbose --level 5
+
+=head2 Changing names of parameters
+
+It's possible that the parameters your system command expects do not adhere to this
+naming scheme. In this case you can use the 'CmdOpt' trait which allows you to
+specify exactly how you want the parameter to appear on the command line.
+
+    has 'option' => ( isa           => 'Bool' );
+    # --option
+
+=head3 cmdopt_prefix
+
+This lets you override the prefix used for the option (for example to use the short
+form of multi-character options).
+
+    has 'option' => ( traits        => [ 'CmdOpt' ],
+                      isa           => 'Bool',
+                      cmdopt_prefix => '-'
+                    );
+    # -option
+
+=head3 cmdopt_name
+
+This lets you completely override the option name with whatever string you want
+    
+    has 'option' => ( traits        => [ 'CmdOpt' ],
+                      isa           => 'Bool',
+                      cmdopt_name   => '+foo'
+                    );
+    # +foo
+
+=head3 cmdopt_env
+
+This will set an environment variable with the attribute name/value rather than pass 
+it along as a command line param
+
+    has 'home_dir' => ( traits      => [ 'CmdOpt' ],
+                        isa         => 'Str',
+                        cmdopt_env  => 'APP_HOME'
+                        default     => '/my/app/home'
+                    );
+    
+    # ENV{APP_HOME} = /my/app/home
+
+See L<MooseX::Role::Cmd::Meta::Attribute::Trait>
 
 =head1 PRIVATE METHODS
 
-=head2 _attr_name_to_cmd_options
+=head2 _attr_to_cmd_options
 
 Returns an array (or array reference) of command options that correspond
-to the given attribute name. This essentially provides the following
-functionality:
-
-Bool as flags, everything else as key => value params
-
-    has 'v'       => ( isa => 'Bool' );                 # -v
-    has 'i'       => ( isa => 'Str' );                  # -i input.data
-
-Use Getopt::Long conventions with hyphenations:
-
-    has 'v'       => ( isa => 'Bool' );                 # -v
-    has 'verbose' => ( isa => 'Bool' );                 # --verbose
-
-Use optional info from CmdOpt trait:
-
-    has 'v'       => ( isa          => 'Bool' );        # -v
-    
-    has 'short'   => ( traits       => [ 'CmdOpt' ],
-                       isa          => 'Bool',
-                       cmdopt_prefix => '-'
-                     );                                 # -short
-    
-    has 'rename'  => ( traits       => [ 'CmdOpt' ],
-                       isa          => 'Bool',
-                       cmdopt_name  => '+foo'
-                     );                                 # +foo
+to the given attribute name.
 
 =cut
 
-sub _attr_name_to_cmd_options {
-    my ( $self, $attr_name ) = @_;
+sub _attr_to_cmd_options {
+    my ( $self, $attr ) = @_;
     
-    my $attr = $self->meta->get_attribute( $attr_name );
+    my $attr_name = $attr->name;
     
     # decide the default settings
     my $opt_prefix = length( $attr_name ) == 1 ? '-' : '--';
@@ -219,9 +282,22 @@ sub _attr_name_to_cmd_options {
     
     # override defaults with Traits
     if ( $attr->does('MooseX::Role::Cmd::Meta::Attribute::Trait') ) {
+        
+        # deal with $ENV
+        if ($attr->has_cmdopt_env) {
+            my $env_key   = $attr->cmdopt_env;
+            my $env_value = $self->$attr_name;
+            if ( defined $env_value ) {
+                $ENV{$env_key} = $env_value;
+            }
+            # environment vars not used as params
+            return;
+        }
+
         if ($attr->has_cmdopt_prefix) {
             $opt_prefix = $attr->cmdopt_prefix;
         }
+        
         if ($attr->has_cmdopt_name) {
             $opt_prefix = '';                   # name overrides prefix
             $opt_name   = $attr->cmdopt_name;

@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 9;
+use Test::More tests => 10;
 
 use FindBin;
 use lib "$FindBin::Bin/lib";
@@ -45,7 +45,7 @@ use Data::Dumper;
 is_deeply( \@cmd_args, \@expected_args, 'args look OK' );
 
 # with traits
-isa_ok( $cmd = Test::Cmd::DirWithTraits->new( %args ), 'Test::Cmd::DirWithTraits' );
+isa_ok( $cmd = Test::Cmd::DirWithTraits->new( %args, env_test => 'test_value' ), 'Test::Cmd::DirWithTraits' );
 
 is( $cmd->bin_name, 'dir' );
 
@@ -55,6 +55,8 @@ is( $cmd->bin_name, 'dir' );
 
 # warn "GOT: "     .Dumper( \@cmd_args );
 # warn "EXPECTED: ".Dumper( \@expected_args );
+
+is ($ENV{'ENV_TEST_KEY'}, 'test_value', 'check cmdopt_env' );
 
 is_deeply( \@cmd_args, \@expected_args, 'trait args look OK' );
 

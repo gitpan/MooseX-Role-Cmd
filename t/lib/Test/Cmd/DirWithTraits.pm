@@ -16,6 +16,8 @@ has 'u'         => ( traits => [ 'CmdOpt' ], isa => 'Bool', is => 'rw' );
 has 'undef'     => ( traits => [ 'CmdOpt' ], isa => 'Bool', is => 'rw' );
 has 'undef_str' => ( traits => [ 'CmdOpt' ], isa => 'Str',  is => 'rw' );
 
+has 'env_test'  => ( traits => [ 'CmdOpt' ], isa => 'Str',  is => 'rw', cmdopt_env => 'ENV_TEST_KEY' );
+
 sub build_bin_name { 'dir' };
 
 1;

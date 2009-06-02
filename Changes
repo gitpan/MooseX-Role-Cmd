@@ -1,3 +1,14 @@
+
+0.05 Tue Jun  2 17:27:38 BST 2009
+    - Added POD
+    
+    - Added trait attribute: 'cmdopt_env'
+        - allow ENV variables to be set rather than command line params
+    
+    - private: _attr_name_to_cmd_options()
+        - changed to _attr_to_cmd_options (i.e. attribute not attribute name) 
+        to provide more flexibility
+
 0.04 Fri Dec  5 10:43:01 GMT 2008
     - Updated MANIFEST
     - Require IPC::Cmd => 0.42 (RT #41450)
