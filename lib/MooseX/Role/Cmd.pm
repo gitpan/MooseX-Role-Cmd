@@ -7,7 +7,7 @@ use IPC::Cmd ();
 use Moose::Role;
 use MooseX::Role::Cmd::Meta::Attribute::Trait;
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 =head1 NAME
 
@@ -199,6 +199,7 @@ governing the way these attributes are mapped.
     boolean             treat attr as flag (no value)
     non-boolean         treat attr as parameter (with value)
     value=undef         ignore attr
+    name=_name          ignore attr
 
 These points are illustrated in the following example:
 
@@ -211,6 +212,9 @@ These points are illustrated in the following example:
     has 'verbose' => ( is => 'rw', isa => 'Bool', default => 1 );
     has 'level'   => ( is => 'rw', isa => 'Int' );
     has 'option'  => ( is => 'rw', isa => 'Str' );
+    
+    has '_internal' => ( is => 'ro', isa => Str, reader => internal, default => 'foo' );
+    # attribute names starting with '_' are not included
     
     $scanner = MyApp::Commands::Scanner->new( output => '/tmp/scanner.log', level => 5 );
     
@@ -280,15 +284,16 @@ sub _attr_to_cmd_options {
     my $opt_prefix = length( $attr_name ) == 1 ? '-' : '--';
     my $opt_name   = $attr_name;
     
+    my $attr_value = $attr->get_value( $self );
+    
     # override defaults with Traits
     if ( $attr->does('MooseX::Role::Cmd::Meta::Attribute::Trait') ) {
         
         # deal with $ENV
         if ($attr->has_cmdopt_env) {
             my $env_key   = $attr->cmdopt_env;
-            my $env_value = $self->$attr_name;
-            if ( defined $env_value ) {
-                $ENV{$env_key} = $env_value;
+            if ( defined $attr_value ) {
+                $ENV{$env_key} = $attr_value;
             }
             # environment vars not used as params
             return;
@@ -310,11 +315,17 @@ sub _attr_to_cmd_options {
     my @options = ();
     if ( $attr->type_constraint->is_a_type_of( 'Bool' ) ) {
         push @options, ( $opt_fullname )
-            if $self->$attr_name;                       # only add if attr is true
+            if $attr_value;                             # only add if attr is true
     }
     else {
-        push @options, ( $opt_fullname, $self->$attr_name )
-            if defined $self->$attr_name;               # only add if attr is defined
+        
+        if ( defined $attr_value                        # only add if attr value is defined
+             && 
+             $attr_name !~ / ^ _ /xms                   # and attr name doesn't start with '_'
+           )
+        {
+            push @options, ( $opt_fullname, $attr_value )
+        }
     }
     
     return wantarray ? @options : \@options;
