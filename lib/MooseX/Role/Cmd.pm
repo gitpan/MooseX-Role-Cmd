@@ -7,7 +7,7 @@ use IPC::Cmd ();
 use Moose::Role;
 use MooseX::Role::Cmd::Meta::Attribute::Trait;
 
-our $VERSION = '0.06';
+our $VERSION = '0.07';
 
 =head1 NAME
 
@@ -144,8 +144,11 @@ sub cmd_args {
 
     # exclude this role's attributes from the flag list
     # could use custom metaclasses and introspection, but this will do for now
-    my %non_flag   = map  {     $_ => 1    } __PACKAGE__->meta->get_attribute_list;
-    my @flag_attrs = grep { !$non_flag{$_->name} } values %{ $self->meta->get_attribute_map };
+    my %non_flag   = map    { $_ => 1 } __PACKAGE__->meta->get_attribute_list;
+    
+    my @flag_attrs = grep   { !$non_flag{$_->name} }
+                     map    { $self->meta->get_attribute($_) }
+                     $self->meta->get_attribute_list;
     
     #####
     # IS: 2008/10/15
