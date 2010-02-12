@@ -1,19 +1,25 @@
---- 
-abstract: Wrap system command binaries the Moose way
-author: 
-  - Eden Cardim <edencardim@gmail.com>
+---
+abstract: 'Wrap system command binaries the Moose way'
+author:
+  - 'Eden Cardim <edencardim@gmail.com>'
+build_requires:
+  ExtUtils::MakeMaker: 6.42
+configure_requires:
+  ExtUtils::MakeMaker: 6.42
 distribution_type: module
-generated_by: Module::Install version 0.68
+generated_by: 'Module::Install version 0.91'
 license: perl
-meta-spec: 
-  url: http://module-build.sourceforge.net/META-spec-v1.3.html
-  version: 1.3
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
 name: MooseX-Role-Cmd
-no_index: 
-  directory: 
+no_index:
+  directory:
     - inc
     - t
-requires: 
-  IPC::Cmd: 0
-  Moose: 0.24
-version: 0.01
+requires:
+  IPC::Cmd: 0.42
+  Moose: 0.6
+resources:
+  license: http://dev.perl.org/licenses/
+version: 0.08
