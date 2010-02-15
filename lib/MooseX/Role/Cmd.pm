@@ -8,7 +8,7 @@ use IPC::Cmd ();
 use Moose::Role;
 use MooseX::Role::Cmd::Meta::Attribute::Trait;
 
-our $VERSION = '0.08';
+our $VERSION = '0.09';
 
 =head1 NAME
 
@@ -52,7 +52,7 @@ command strings which are passed to L<IPC::Cmd>.
 =head2 $cmd->bin_name
 
 Sets the binary executable name for the command you want to run. Defaults
-the to last part of the class name.
+the to last part of the class name, lower-cased.
 
 =cut
 
