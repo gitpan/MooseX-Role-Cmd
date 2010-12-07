@@ -1,8 +1,11 @@
-0.09 Mon Feb 15 09:35:57 GMT-3 2010
-    - Minor POD correction
-    - Added IPC::Run and Moose 0.90 to dependencies
+0.10 Tue Dec  7 03:29:35 BRST 2010
+    - added Test::Exception as a build dependency
 
-0.08 Fri Feb 12 03:29:31 GMT-3 2010
+0.09
+    - 'private' attributes ignored properly
+
+
+0.08 Tue Feb 12 03:29:31 GMT-3 2010
     - Added README
     - Explicitly using Carp::confess instead of relying on Moose exports
 

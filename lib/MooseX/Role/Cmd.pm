@@ -8,7 +8,7 @@ use IPC::Cmd ();
 use Moose::Role;
 use MooseX::Role::Cmd::Meta::Attribute::Trait;
 
-our $VERSION = '0.09';
+our $VERSION = '0.10';
 
 =head1 NAME
 
@@ -52,7 +52,7 @@ command strings which are passed to L<IPC::Cmd>.
 =head2 $cmd->bin_name
 
 Sets the binary executable name for the command you want to run. Defaults
-the to last part of the class name, lower-cased.
+the to last part of the class name.
 
 =cut
 
@@ -148,6 +148,7 @@ sub cmd_args {
     my %non_flag   = map    { $_ => 1 } __PACKAGE__->meta->get_attribute_list;
 
     my @flag_attrs = grep   { !$non_flag{$_->name} }
+                     grep   { substr($_->name, 0, 1) ne '_' }
                      map    { $self->meta->get_attribute($_) }
                      $self->meta->get_attribute_list;
 
@@ -322,12 +323,7 @@ sub _attr_to_cmd_options {
             if $attr_value;                             # only add if attr is true
     }
     else {
-
-        if ( defined $attr_value                        # only add if attr value is defined
-             &&
-             $attr_name !~ / ^ _ /xms                   # and attr name doesn't start with '_'
-           )
-        {
+        if ( defined $attr_value ) {                    # only add if attr value is defined
             push @options, ( $opt_fullname, $attr_value )
         }
     }
